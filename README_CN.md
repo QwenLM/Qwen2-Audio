@@ -19,7 +19,7 @@
 * 语音聊天：用户可以自由地与Qwen2-Audio进行语音互动，而无需文本输入；
 * 音频分析：用户可以在互动过程中提供音频和文本指令对音频进行分析；
 
-**我们即将开源 Qwen2-Audio 系列的两个模型：Qwen2-Audio和Qwen2-Audio-Chat，敬请期待。**
+**我们即将开源 Qwen2-Audio 系列的两个模型：Qwen2-Audio和Qwen2-Audio-Instruct，敬请期待。**
 ## 结构与训练范式
 
 Qwen2-Audio三阶段训练过程概述。
