@@ -22,7 +22,7 @@ We introduce the latest progress of Qwen-Audio, a large-scale audio-language mod
 
 * audio analysis: users could provide audio and text instructions for analysis during the interaction;
 
-**We are going to release two models of the Qwen2-Audio series soon: Qwen2-Audio and Qwen2-Audio-Chat.**
+**We are going to release two models of the Qwen2-Audio series soon: Qwen2-Audio and Qwen2-Audio-Instruct.**
 
 ## Architecture
 
