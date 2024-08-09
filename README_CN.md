@@ -293,5 +293,5 @@ python demo/web_demo_audio.py
 ```
 ## 联系我们
 
-如果你想给我们的研发团队和产品团队留言，请通过邮件（`qianwen_opensource@alibabacloud.com`g）联系我们。
+如果你想给我们的研发团队和产品团队留言，请通过邮件（`qianwen_opensource@alibabacloud.com`）联系我们。
 <br>
