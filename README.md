@@ -25,7 +25,7 @@ We introduce the latest progress of Qwen-Audio, a large-scale audio-language mod
 
 The overview of three-stage training process of Qwen2-Audio.
 
-<p align="left">
+<p align="center">
     <img src="assets/framework.png" width="80%"/>
 <p>
 
@@ -43,7 +43,7 @@ We evaluated the Qwen2-Audio's abilities on 13 standard benchmarks as follows:
 
 
 The below is the overal performance:
-<p align="left">
+<p align="center">
     <img src="assets/radar_compare_qwen_audio.png" width="70%"/>
 <p>
 
