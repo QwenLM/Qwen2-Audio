@@ -272,7 +272,7 @@ python demo/web_demo_audio.py
 
 ## 引用
 
-如果你觉得我们的论文和代码对你的研究有帮助，请考虑:star: 和引用 :pencil: :)
+如果你觉得我们的论文和代码对你的研究有帮助，请考虑 :star: 和引用 :pencil: :)
 
 ```BibTeX
 @article{Qwen-Audio,
