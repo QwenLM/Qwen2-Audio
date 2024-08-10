@@ -84,7 +84,7 @@ def predict(chatbot, task_history):
     print(f"{text=}")
     inputs = processor(text=text, audios=audios, return_tensors="pt", padding=True)
     if not _get_args().cpu_only:
-        inputs.input_ids = inputs.input_ids.to("cuda")
+        inputs["input_ids"] = inputs.input_ids.to("cuda")
 
     generate_ids = model.generate(**inputs, max_length=256)
     generate_ids = generate_ids[:, inputs.input_ids.size(1):]
@@ -144,7 +144,7 @@ def _launch_demo(args):
 
 if __name__ == "__main__":
     args = _get_args()
-    if not args.cpu_only:
+    if args.cpu_only:
         device_map = "cpu"
     else:
         device_map = "auto"
