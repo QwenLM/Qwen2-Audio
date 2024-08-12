@@ -81,7 +81,10 @@ def predict(chatbot, task_history):
                         librosa.load(ele['audio_url'], sr=processor.feature_extractor.sampling_rate)[0]
                     )
 
+    if len(audios)==0:
+        audios=None
     print(f"{text=}")
+    print(f"{audios=}")
     inputs = processor(text=text, audios=audios, return_tensors="pt", padding=True)
     if not _get_args().cpu_only:
         inputs["input_ids"] = inputs.input_ids.to("cuda")
