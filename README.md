@@ -241,6 +241,14 @@ generated_ids = model.generate(**inputs, max_length=256)
 generated_ids = generated_ids[:, inputs.input_ids.size(1):]
 response = processor.batch_decode(generated_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
 ```
+
+#### Finetuning
+We would like to thank the Hugging Face open-source community for their contributions, which have made it easy for us to implement model fine-tuning with Accelerate and DeepSpeed. We support both LoRA (Low-Rank Adaptation) and full-parameter fine-tuning, with the code provided by [Xiaoming Liu](https://github.com/Lollipop).
+
+```bash
+cd finetune && bash run.sh
+```
+
 #### 🤖 ModelScope
 We strongly advise users especially those in mainland China to use ModelScope. `snapshot_download` can help you solve issues concerning downloading checkpoints.
 ## Demo
