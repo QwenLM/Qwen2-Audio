@@ -112,7 +112,7 @@ for message in conversation:
                     )
                 elif "audio" in ele:
                     audios.append(
-                        librosa.load(ele['audio_file'], sr=processor.feature_extractor.sampling_rate)[0]
+                        librosa.load(ele['audio'], sr=processor.feature_extractor.sampling_rate)[0]
                     )
 
 inputs = processor(text=text, audios=audios, return_tensors="pt", padding=True)
@@ -164,7 +164,7 @@ for message in conversation:
                     )
                 elif "audio" in ele:
                     audios.append(
-                        librosa.load(ele['audio_file'], sr=processor.feature_extractor.sampling_rate)[0]
+                        librosa.load(ele['audio'], sr=processor.feature_extractor.sampling_rate)[0]
                     )
 
 inputs = processor(text=text, audios=audios, return_tensors="pt", padding=True)
@@ -222,7 +222,7 @@ for conversation in conversations:
                     )
                 elif "audio" in ele:
                     audios.append(
-                        librosa.load(ele['audio_file'], sr=processor.feature_extractor.sampling_rate)[0]
+                        librosa.load(ele['audio'], sr=processor.feature_extractor.sampling_rate)[0]
                     )
 
 inputs = processor(text=text, audios=audios, return_tensors="pt", padding=True)
