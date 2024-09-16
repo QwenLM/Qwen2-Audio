@@ -87,7 +87,8 @@ def predict(chatbot, task_history):
     print(f"{audios=}")
     inputs = processor(text=text, audios=audios, return_tensors="pt", padding=True)
     if not _get_args().cpu_only:
-        inputs["input_ids"] = inputs.input_ids.to("cuda")
+        inputs["input_ids"] = inputs.input_ids.to(model.device)
+        inputs["attention_mask"] = inputs.attention_mask.to(model.device)
 
     generate_ids = model.generate(**inputs, max_length=256)
     generate_ids = generate_ids[:, inputs.input_ids.size(1):]
