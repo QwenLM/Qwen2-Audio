@@ -1,0 +1,1 @@
+gradio_webrtc[vad]==0.0.11
