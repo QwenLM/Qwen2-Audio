@@ -104,6 +104,18 @@ def predict(chatbot, task_history):
     if item['type'] == 'audio']
 
     print(audio_urls)
+    if not os.path.listdir('qwen2-audio-mutox-inference.csv'):
+        with open('qwen2_audio_mutox_test.csv', mode='w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(["audio_url", "Prediction"])  
+            for entry in audio_urls:
+                writer.writerow([entry["audio_url"], response])
+    else:
+        with open('qwen2_audio_mutox_test.csv', mode='a', newline='') as file:
+            writer = csv.writer(file)
+            for entry in audio_urls:
+                writer.writerow([entry["audio_url"], response])
+        
     task_history.append({'role': 'assistant',
                          'content': response})
     chatbot.append((None, response))  # Add the response to chatbot
