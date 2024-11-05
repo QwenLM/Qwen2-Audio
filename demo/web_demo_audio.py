@@ -81,21 +81,31 @@ def predict(audio_folder, prompt):
             file_path = os.path.join(audio_folder, filename)
             try:
                 audio_data = librosa.load(file_path, sr=processor.feature_extractor.sampling_rate)[0]
-                audios.append(audio_data)
+                inputs = processor(text=prompt, audios=audio_data, return_tensors="pt", padding=True)
+                if not _get_args().cpu_only:
+                    inputs["input_ids"] = inputs.input_ids.to("cuda")
+            
+                generate_ids = model.generate(**inputs, max_length=256)
+                generate_ids = generate_ids[:, inputs.input_ids.size(1):]
+                response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+                print(f"Generated response: {response}")
+                print(response)
+
+                # audios.append(audio_data)
                 print(f"Loaded audio file: {filename}")
             except Exception as e:
                 print(f"Error loading {filename}: {e}")
-    if len(audios) == 0:
-        audios = None
-    inputs = processor(text=prompt, audios=audios, return_tensors="pt", padding=True)
-    if not _get_args().cpu_only:
-        inputs["input_ids"] = inputs.input_ids.to("cuda")
+    # if len(audios) == 0:
+    #     audios = None
+    # inputs = processor(text=prompt, audios=audios, return_tensors="pt", padding=True)
+    # if not _get_args().cpu_only:
+    #     inputs["input_ids"] = inputs.input_ids.to("cuda")
 
-    generate_ids = model.generate(**inputs, max_length=256)
-    generate_ids = generate_ids[:, inputs.input_ids.size(1):]
-    response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
-    print(f"Generated response: {response}")
-    return response
+    # generate_ids = model.generate(**inputs, max_length=256)
+    # generate_ids = generate_ids[:, inputs.input_ids.size(1):]
+    # response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+    # print(f"Generated response: {response}")
+    # return response
 
 
 # def predict(audio, prompt):
