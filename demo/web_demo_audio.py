@@ -8,7 +8,7 @@ from argparse import ArgumentParser
 
 DEFAULT_CKPT_PATH = 'Qwen/Qwen2-Audio-7B-Instruct'
 
-csv_file_path = "qwen2-audio-mutox-inference.csv"
+csv_file_path = "./qwen2-audio-mutox-inference.csv"
 def _get_args():
     parser = ArgumentParser()
     parser.add_argument("-c", "--checkpoint-path", type=str, default=DEFAULT_CKPT_PATH,
