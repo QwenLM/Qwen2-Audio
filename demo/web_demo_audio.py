@@ -8,7 +8,7 @@ from argparse import ArgumentParser
 
 DEFAULT_CKPT_PATH = 'Qwen/Qwen2-Audio-7B-Instruct'
 
-
+csv_file_path = "qwen2-audio-mutox-inference.csv"
 def _get_args():
     parser = ArgumentParser()
     parser.add_argument("-c", "--checkpoint-path", type=str, default=DEFAULT_CKPT_PATH,
@@ -96,6 +96,7 @@ def predict(chatbot, task_history):
 
     response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
     print(f"{response=}")
+    print(response[0]['audio_url'])
     task_history.append({'role': 'assistant',
                          'content': response})
     chatbot.append((None, response))  # Add the response to chatbot
