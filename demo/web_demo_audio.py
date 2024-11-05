@@ -104,7 +104,7 @@ def predict(chatbot, task_history):
     if item['type'] == 'audio']
 
     print(audio_urls, response)
-    if not os.path.listdir('qwen2-audio-mutox-inference.csv'):
+    if not os.path.exists('qwen2-audio-mutox-inference.csv'):
         with open('qwen2_audio_mutox_test.csv', mode='w', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(["audio_url", "Prediction"])  
