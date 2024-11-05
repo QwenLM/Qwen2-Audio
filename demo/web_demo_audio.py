@@ -96,7 +96,8 @@ def predict(chatbot, task_history):
 
     response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
     print(f"{response=}")
-    print(response[0][1])
+    item=response[0]
+    file_names = [os.path.basename(item['audio_url']) for item in audio_data if item['type'] == 'audio']
     task_history.append({'role': 'assistant',
                          'content': response})
     chatbot.append((None, response))  # Add the response to chatbot
