@@ -207,5 +207,5 @@ if __name__ == "__main__":
     prompt = "Is the audio toxic? If yes, what kind of toxic class does this audio belong to?"
     audio_directory = "/home/rsingh57/audio-test/mutox-dataset/toxic"
     audio_paths = [os.path.join(audio_directory, f) for f in os.listdir(audio_directory) if f.endswith('.mp3')]
-    predict(audio_paths,prompt)
+    predict(audio_directory,prompt)
     #_launch_demo(args)
