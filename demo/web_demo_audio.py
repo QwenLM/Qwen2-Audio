@@ -3,6 +3,8 @@ import modelscope_studio as mgr
 import librosa
 from transformers import AutoProcessor, Qwen2AudioForConditionalGeneration
 from argparse import ArgumentParser
+import csv
+import os
 
 DEFAULT_CKPT_PATH = 'Qwen/Qwen2-Audio-7B-Instruct'
 
@@ -67,37 +69,67 @@ def regenerate(chatbot, task_history):
     return chatbot, task_history
 
 
-def predict(chatbot, task_history):
-    """Generate a response from the model."""
-    print(f"{task_history=}")
-    print(f"{chatbot=}")
-    text = processor.apply_chat_template(task_history, add_generation_prompt=True, tokenize=False)
-    audios = []
-    for message in task_history:
-        if isinstance(message["content"], list):
-            for ele in message["content"]:
-                if ele["type"] == "audio":
-                    audios.append(
-                        librosa.load(ele['audio_url'], sr=processor.feature_extractor.sampling_rate)[0]
-                    )
 
-    if len(audios)==0:
-        audios=None
-    print(f"{text=}")
-    print(f"{audios=}")
-    inputs = processor(text=text, audios=audios, return_tensors="pt", padding=True)
+def predict(audio_folder, prompt):
+    """Generate a response from the model using audio files from a local folder."""
+    # Log input information
+    print(f"Prompt: {prompt}")
+    print(f"Audio folder: {audio_folder}")
+    audios = []
+    for filename in os.listdir(audio_folder):
+        if filename.endswith(".mp3"): 
+            file_path = os.path.join(audio_folder, filename)
+            try:
+                audio_data = librosa.load(file_path, sr=processor.feature_extractor.sampling_rate)[0]
+                audios.append(audio_data)
+                print(f"Loaded audio file: {filename}")
+            except Exception as e:
+                print(f"Error loading {filename}: {e}")
+    if len(audios) == 0:
+        audios = None
+    inputs = processor(text=prompt, audios=audios, return_tensors="pt", padding=True)
     if not _get_args().cpu_only:
         inputs["input_ids"] = inputs.input_ids.to("cuda")
 
     generate_ids = model.generate(**inputs, max_length=256)
     generate_ids = generate_ids[:, inputs.input_ids.size(1):]
-
     response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
-    print(f"{response=}")
-    task_history.append({'role': 'assistant',
-                         'content': response})
-    chatbot.append((None, response))  # Add the response to chatbot
-    return chatbot, task_history
+    print(f"Generated response: {response}")
+    return response
+
+
+# def predict(audio, prompt):
+#     """Generate a response from the model."""
+#     # print(f"{task_history=}")
+#     # print(f"{chatbot=}")
+#     text = processor.apply_chat_template(audio, add_generation_prompt=True, tokenize=False)
+#     audios = []
+#     for message in audio:
+#         if isinstance(message["content"], list):
+#             for ele in message["content"]:
+#                 if ele["type"] == "audio":
+#                     audios.append(
+#                         librosa.load(ele['audio_url'], sr=processor.feature_extractor.sampling_rate)[0]
+#                     )
+
+#     if len(audios)==0:
+#         audios=None
+#     print(f"{text=}")
+#     print(f"{audios=}")
+#     inputs = processor(text=text, audios=audios, return_tensors="pt", padding=True)
+#     if not _get_args().cpu_only:
+#         inputs["input_ids"] = inputs.input_ids.to("cuda")
+
+#     generate_ids = model.generate(**inputs, max_length=256)
+#     generate_ids = generate_ids[:, inputs.input_ids.size(1):]
+
+#     response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+#     print(f"{response=}")
+#     task_history.append({'role': 'assistant',
+#                          'content': response})
+#     chatbot.append((None, response))  # Add the response to chatbot
+#     return content
+#     #return chatbot, task_history
 
 
 def _launch_demo(args):
@@ -132,7 +164,7 @@ def _launch_demo(args):
         user_input.submit(fn=add_text,
                           inputs=[chatbot, task_history, user_input],
                           outputs=[chatbot, task_history, user_input]).then(
-            predict, [chatbot, task_history], [chatbot, task_history], show_progress=True
+            predict, [audio_paths], [chatbot, task_history], show_progress=True
         )
         empty_bin.click(reset_state, outputs=[chatbot, task_history], show_progress=True)
         regen_btn.click(regenerate, [chatbot, task_history], [chatbot, task_history], show_progress=True)
@@ -161,4 +193,9 @@ if __name__ == "__main__":
     model.generation_config.max_new_tokens = 2048  # For chat.
     print("generation_config", model.generation_config)
     processor = AutoProcessor.from_pretrained(args.checkpoint_path, resume_download=True)
-    _launch_demo(args)
+    csv_file="qwen2_audio_mutox_data_test.csv"
+    prompt = "Is the audio toxic? If yes, what kind of toxic class does this audio belong to?"
+    audio_directory = "/home/rsingh57/audio-test/mutox-dataset/toxic"
+    audio_paths = [os.path.join(audio_directory, f) for f in os.listdir(audio_directory) if f.endswith('.mp3')]
+    predict(audio_paths,prompt)
+    #_launch_demo(args)
