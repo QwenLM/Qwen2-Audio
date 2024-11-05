@@ -138,7 +138,7 @@ def _launch_demo(args):
         regen_btn.click(regenerate, [chatbot, task_history], [chatbot, task_history], show_progress=True)
 
     demo.queue().launch(
-        share=False,
+        share=True,
         inbrowser=args.inbrowser,
         server_port=args.server_port,
         server_name=args.server_name,
