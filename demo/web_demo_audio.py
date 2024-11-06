@@ -80,9 +80,10 @@ def predict(chatbot, task_history):
         if isinstance(message["content"], list):
             for ele in message["content"]:
                 if ele["type"] == "audio":
+                    url=ele['audio_url']
                     audios.append(
-                        librosa.load(ele['audio_url'], sr=processor.feature_extractor.sampling_rate)[0]
-                        url=ele['audio_url']
+                        librosa.load(ele['audio_url'], sr=processor.feature_extractor.sampling_rate)[0],
+                        
                     )
 
     if len(audios)==0:
