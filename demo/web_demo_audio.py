@@ -75,12 +75,14 @@ def predict(chatbot, task_history):
     print(f"{chatbot=}")
     text = processor.apply_chat_template(task_history, add_generation_prompt=True, tokenize=False)
     audios = []
+    url=""
     for message in task_history:
         if isinstance(message["content"], list):
             for ele in message["content"]:
                 if ele["type"] == "audio":
                     audios.append(
                         librosa.load(ele['audio_url'], sr=processor.feature_extractor.sampling_rate)[0]
+                        url=ele['audio_url']
                     )
 
     if len(audios)==0:
@@ -102,15 +104,15 @@ def predict(chatbot, task_history):
     with open('qwen2audio_mutox_results.csv', mode="a", newline="") as csv_file:
         writer = csv.writer(csv_file)
         if csv_file.tell() == 0: 
-            writer.writerow(["Role", "Content", "Audio URL", "Response"])
+            writer.writerow([ "Audio URL", "Response"])
         if len(task_history) >= 2:
             user_entry = task_history[-2]
             assistant_entry = task_history[-1]
             user_text = user_entry["content"]
             user_text_str = user_text if isinstance(user_text, str) else str(user_text)
-            audio_url = audio_urls[0] if audio_urls else "No audio"  
+            audio_url = url
             response_text = assistant_entry["content"]
-            writer.writerow(["user", user_text_str, audio_url, response_text])
+            writer.writerow([ url, response_text])
     return chatbot, task_history
 
 
