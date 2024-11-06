@@ -143,18 +143,19 @@ def predict_multiple(audio_paths, prompt):
     for audio in audio_paths:
         try:
             audio_data, sr = librosa.load(audio, sr=processor.feature_extractor.sampling_rate)
-            inputs = processor(text=prompt, audios=[audio_data], return_tensors="pt", padding=True)
-            if not args.cpu_only:
-                inputs = {k: v.to("cuda") for k, v in inputs.items()}
-            torch.cuda.empty_cache()
-            with autocast():
-                generate_ids = model.generate(**inputs, max_new_tokens=128) 
-                generate_ids = generate_ids[:, inputs.input_ids.size(1):]
-            response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
-            responses.append((audio, response))
-            print(f"{response=}")
-            del inputs, generate_ids
-            torch.cuda.empty_cache()
+            print(audio_data,sr)
+            # inputs = processor(text=prompt, audios=[audio_data], return_tensors="pt", padding=True)
+            # if not args.cpu_only:
+            #     inputs = {k: v.to("cuda") for k, v in inputs.items()}
+            # torch.cuda.empty_cache()
+            # with autocast():
+            #     generate_ids = model.generate(**inputs, max_new_tokens=128) 
+            #     generate_ids = generate_ids[:, inputs.input_ids.size(1):]
+            # response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+            # responses.append((audio, response))
+            # print(f"{response=}")
+            # del inputs, generate_ids
+            # torch.cuda.empty_cache()
         except Exception as e:
             print(f"Error processing audio {audio}: {e}")
             continue
