@@ -12,7 +12,7 @@ from tqdm import tqdm
 from transformers import AutoProcessor, Qwen2AudioForConditionalGeneration
 from transformers.pipelines.audio_utils import ffmpeg_read
 from sklearn.metrics import accuracy_score
-
+import os
 
 
 ds_collections = {
@@ -192,4 +192,15 @@ if __name__ == '__main__':
             score = accuracy_score(refs, hyps)
             print(f"{source} ACC_score:", score, len(hyps))
 
-    torch.distributed.barrier()
+    
+    os.environ["MASTER_ADDR"] = "localhost"
+    os.environ["MASTER_PORT"] = "12355"
+    os.environ["WORLD_SIZE"] = "1"
+    os.environ["RANK"] = "0"
+    
+    # Your remaining code
+    torch.distributed.init_process_group(
+        backend='nccl',
+        world_size=int(os.getenv('WORLD_SIZE')),
+        rank=int(os.getenv('RANK')),
+    )
