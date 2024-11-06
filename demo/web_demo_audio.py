@@ -3,6 +3,7 @@ import os
 import gradio as gr
 import modelscope_studio as mgr
 import librosa
+import torch
 from transformers import AutoProcessor, Qwen2AudioForConditionalGeneration
 from argparse import ArgumentParser
 from torch.cuda.amp import autocast
@@ -127,9 +128,6 @@ def predict(chatbot, task_history):
 
 
 
-
-
-
 def predict_multiple(audio_paths, prompt):
     args = _get_args()
     device_map = "cpu" if args.cpu_only else "auto"
@@ -140,40 +138,30 @@ def predict_multiple(audio_paths, prompt):
         device_map=device_map,
         resume_download=True,
     ).eval()
-    model.generation_config.max_new_tokens = 1024 
+    model.generation_config.max_new_tokens = 1024  
     processor = AutoProcessor.from_pretrained(args.checkpoint_path, resume_download=True)
-    audio_librosa ,responses = [], []
+    responses = [] 
     for audio in audio_paths:
         try:
             audio_data, sr = librosa.load(audio, sr=processor.feature_extractor.sampling_rate)
-            audio_librosa.append(audio_data)
             inputs = processor(text=prompt, audios=[audio_data], return_tensors="pt", padding=True)
             if not args.cpu_only:
                 inputs = {k: v.to("cuda") for k, v in inputs.items()}
             torch.cuda.empty_cache()
             with autocast():
-                generate_ids = model.generate(**inputs, max_length=128)
+                generate_ids = model.generate(**inputs, max_length=128)  
                 generate_ids = generate_ids[:, inputs.input_ids.size(1):]
             response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
             responses.append((audio, response))
             print(f"{response=}")
             del inputs, generate_ids
             torch.cuda.empty_cache()
+
         except Exception as e:
-            print(f"Error loading audio {audio}: {e}")
+            print(f"Error processing audio {audio}: {e}")
             continue
 
-    return responses
-    # if not args.cpu_only:
-    #     inputs = {k: v.to("cuda") for k, v in inputs.items()}
-    # torch.cuda.empty_cache()
-    # with autocast():
-    #     generate_ids = model.generate(**inputs, max_length=128)  
-    #     generate_ids = generate_ids[:, inputs.input_ids.size(1):]
-
-    # response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
-    # print(f"{response=}")
-    
+    return responses  
 
 def main():
     # Example audio paths and question for prediction
