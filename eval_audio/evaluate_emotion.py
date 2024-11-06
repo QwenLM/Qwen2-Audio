@@ -22,44 +22,61 @@ ds_collections = {
 
 class AudioDataset(torch.utils.data.Dataset):
 
-    def __init__(self, ds):
-        path = ds['path']
-        self.datas = open(path).readlines()
-
+    # def __init__(self, ds):
+    #     path = ds['path']
+    #     self.datas = open(path).readlines()
+    def __init__(self, audio_folder):
+        self.audio_files = [f for f in os.listdir(audio_folder) if f.endswith('.wav') or f.endswith('.mp3')]
+        self.audio_folder = audio_folder
+    
     def __len__(self):
         return len(self.datas)
 
     def __getitem__(self, idx):
-        data = json.loads(self.datas[idx].strip())
-        audio = data['audio']
-        source = data['source']
-        prompt = "<|audio_bos|><|AUDIO|><|audio_eos|>"+data['prompt']
-        gt = data['gt']
-
+        audio_file = self.audio_files[idx]
+        audio_path = os.path.join(self.audio_folder, audio_file)
+        prompt = f"Transcribe audio file: {audio_file}"
+        gt = "Ground truth transcription"  
         return {
-            'audio': audio,
+            'audio': audio_path,
             'prompt': prompt,
-            'source': source,
+            'source': audio_file,
             'gt': gt
         }
 
+        
+# def read_audio(audio_path):
+#     if audio_path.startswith("http://") or audio_path.startswith("https://"):
+#         inputs = requests.get(audio_path).content
+#     else:
+#         with open(audio_path, "rb") as f:
+#             inputs = f.read()
+#     return inputs
+
 def read_audio(audio_path):
-    if audio_path.startswith("http://") or audio_path.startswith("https://"):
-        inputs = requests.get(audio_path).content
-    else:
-        with open(audio_path, "rb") as f:
-            inputs = f.read()
+    with open(audio_path, "rb") as f:
+        inputs = f.read()
     return inputs
 
+
+
+# def collate_fn(inputs, processor):
+#     input_texts = [_['prompt'] for _ in inputs]
+#     source = [_['source'] for _ in inputs]
+#     gt = [_['gt'] for _ in inputs]
+#     audio_path = [_['audio'] for _ in inputs]
+#     input_audios = [ffmpeg_read(read_audio(_['audio']), sampling_rate=processor.feature_extractor.sampling_rate) for _ in inputs]
+#     inputs = processor(text=input_texts, audios=input_audios, sampling_rate=processor.feature_extractor.sampling_rate, return_tensors="pt", padding=True)
+#     return inputs, audio_path, source, gt
+
 def collate_fn(inputs, processor):
-    input_texts = [_['prompt'] for _ in inputs]
-    source = [_['source'] for _ in inputs]
-    gt = [_['gt'] for _ in inputs]
-    audio_path = [_['audio'] for _ in inputs]
-    input_audios = [ffmpeg_read(read_audio(_['audio']), sampling_rate=processor.feature_extractor.sampling_rate) for _ in inputs]
+    input_texts = [item['prompt'] for item in inputs]
+    source = [item['source'] for item in inputs]
+    gt = [item['gt'] for item in inputs]
+    audio_path = [item['audio'] for item in inputs]
+    input_audios = [ffmpeg_read(read_audio(path), sampling_rate=processor.feature_extractor.sampling_rate) for path in audio_path]
     inputs = processor(text=input_texts, audios=input_audios, sampling_rate=processor.feature_extractor.sampling_rate, return_tensors="pt", padding=True)
     return inputs, audio_path, source, gt
-
 
 class InferenceSampler(torch.utils.data.sampler.Sampler):
 
