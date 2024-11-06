@@ -5,7 +5,11 @@ import modelscope_studio as mgr
 import librosa
 from transformers import AutoProcessor, Qwen2AudioForConditionalGeneration
 from argparse import ArgumentParser
+from torch.cuda.amp import autocast
 
+
+
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
 DEFAULT_CKPT_PATH = 'Qwen/Qwen2-Audio-7B-Instruct'
 
 csv_file_path = "qwen2_audio_mutox_inference.csv"
@@ -121,6 +125,11 @@ def predict(chatbot, task_history):
     chatbot.append((None, response))  # Add the response to chatbot
     return chatbot, task_history
 
+
+
+
+
+
 def predict_multiple(audio_paths, prompt):
     args = _get_args()
     device_map = "cpu" if args.cpu_only else "auto"
@@ -131,12 +140,8 @@ def predict_multiple(audio_paths, prompt):
         device_map=device_map,
         resume_download=True,
     ).eval()
-    model.generation_config.max_new_tokens = 2048  # For chat.
-    print("generation_config", model.generation_config)
-
+    model.generation_config.max_new_tokens = 1024 
     processor = AutoProcessor.from_pretrained(args.checkpoint_path, resume_download=True)
-    print(audio_paths, prompt)
-
     audio_librosa = []
     for audio in audio_paths:
         try:
@@ -146,12 +151,14 @@ def predict_multiple(audio_paths, prompt):
             print(f"Error loading audio {audio}: {e}")
             continue
 
-    print(audio_librosa)
     inputs = processor(text=prompt, audios=audio_librosa, return_tensors="pt", padding=True)
     if not args.cpu_only:
         inputs = {k: v.to("cuda") for k, v in inputs.items()}
-    generate_ids = model.generate(**inputs, max_length=256)
-    generate_ids = generate_ids[:, inputs.input_ids.size(1):]
+    torch.cuda.empty_cache()
+    with autocast():
+        generate_ids = model.generate(**inputs, max_length=128)  
+        generate_ids = generate_ids[:, inputs.input_ids.size(1):]
+
     response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
     print(f"{response=}")
     
