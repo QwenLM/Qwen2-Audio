@@ -91,10 +91,11 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--checkpoint', type=str, default='Qwen/Qwen2-Audio-7B')
-    parser.add_argument('--dataset', type=str, default='')
+    parser.add_argument('--dataset', type=str, default='meld')
     parser.add_argument('--batch-size', type=int, default=1)
     parser.add_argument('--num-workers', type=int, default=1)
     parser.add_argument('--seed', type=int, default=0)
+    
     args = parser.parse_args()
 
     torch.distributed.init_process_group(
