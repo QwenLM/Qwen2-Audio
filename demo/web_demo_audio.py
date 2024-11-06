@@ -122,7 +122,7 @@ def predict(chatbot, task_history):
     return chatbot, task_history
 
 def predict_multiple(audio_paths,prompt):
-     processor = AutoProcessor.from_pretrained(args.checkpoint_path, resume_download=True)
+    processor = AutoProcessor.from_pretrained(args.checkpoint_path, resume_download=True)
     print(audio_paths,prompt)
     audio_librosa = []
     for audio in audio_paths:
