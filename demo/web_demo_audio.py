@@ -121,12 +121,9 @@ def predict(chatbot, task_history):
     chatbot.append((None, response))  # Add the response to chatbot
     return chatbot, task_history
 
-def predict_multiple(audio_paths,prompt):
+def predict_multiple(audio_paths, prompt):
     args = _get_args()
-    if args.cpu_only:
-        device_map = "cpu"
-    else:
-        device_map = "auto"
+    device_map = "cpu" if args.cpu_only else "auto"
 
     model = Qwen2AudioForConditionalGeneration.from_pretrained(
         args.checkpoint_path,
@@ -136,19 +133,25 @@ def predict_multiple(audio_paths,prompt):
     ).eval()
     model.generation_config.max_new_tokens = 2048  # For chat.
     print("generation_config", model.generation_config)
+
     processor = AutoProcessor.from_pretrained(args.checkpoint_path, resume_download=True)
-    print(audio_paths,prompt)
+    print(audio_paths, prompt)
+
     audio_librosa = []
     for audio in audio_paths:
-        audio_librosa.append(librosa.load(audio, sr=processor.feature_extractor.sampling_rate)[0])
+        try:
+            audio_data, sr = librosa.load(audio, sr=processor.feature_extractor.sampling_rate)
+            audio_librosa.append(audio_data)
+        except Exception as e:
+            print(f"Error loading audio {audio}: {e}")
+            continue
+
     print(audio_librosa)
     inputs = processor(text=prompt, audios=audio_librosa, return_tensors="pt", padding=True)
-    if not _get_args().cpu_only:
-        inputs["input_ids"] = inputs.input_ids.to("cuda")
-
+    if not args.cpu_only:
+        inputs = {k: v.to("cuda") for k, v in inputs.items()}
     generate_ids = model.generate(**inputs, max_length=256)
     generate_ids = generate_ids[:, inputs.input_ids.size(1):]
-
     response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
     print(f"{response=}")
     
