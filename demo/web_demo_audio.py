@@ -142,6 +142,15 @@ def predict_multiple(audio_paths,prompt):
     for audio in audio_paths:
         audio_librosa.append(librosa.load(audio, sr=processor.feature_extractor.sampling_rate)[0])
     print(audio_librosa)
+    inputs = processor(text=prompt, audios=audio_librosa, return_tensors="pt", padding=True)
+    if not _get_args().cpu_only:
+        inputs["input_ids"] = inputs.input_ids.to("cuda")
+
+    generate_ids = model.generate(**inputs, max_length=256)
+    generate_ids = generate_ids[:, inputs.input_ids.size(1):]
+
+    response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+    print(f"{response=}")
     
 
 def main():
