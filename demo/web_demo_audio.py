@@ -122,6 +122,7 @@ def predict(chatbot, task_history):
     return chatbot, task_history
 
 def predict_multiple(audio_paths,prompt):
+     processor = AutoProcessor.from_pretrained(args.checkpoint_path, resume_download=True)
     print(audio_paths,prompt)
     audio_librosa = []
     for audio in audio_paths:
@@ -131,6 +132,7 @@ def predict_multiple(audio_paths,prompt):
 
 def main():
     # Example audio paths and question for prediction
+   
     audio_directory = "/home/rsingh57/audio-test/mutox-dataset/non_toxic"
     audio_paths = [os.path.join(audio_directory, f) for f in os.listdir(audio_directory) if f.endswith('.mp3')]
     question = "Is the audio toxic? If yes, what kind of toxic class does this audio belong to?"
