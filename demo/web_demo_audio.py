@@ -125,7 +125,7 @@ def predict_multiple(audio_paths,prompt):
     print(audio_paths,prompt)
     audio_librosa = []
     for audio in audio_paths:
-        audio_librosa.append(librosa.load(ele['audio_url'], sr=processor.feature_extractor.sampling_rate)[0])
+        audio_librosa.append(librosa.load(audio, sr=processor.feature_extractor.sampling_rate)[0])
     print(audio_librosa)
     
 
