@@ -45,8 +45,6 @@ class AudioDataset(torch.utils.data.Dataset):
 
 def read_audio(audio_path):
     if audio_path.startswith("http://") or audio_path.startswith("https://"):
-        # We need to actually check for a real protocol, otherwise it's impossible to use a local file
-        # like http_huggingface_co.png
         inputs = requests.get(audio_path).content
     else:
         with open(audio_path, "rb") as f:
@@ -116,7 +114,7 @@ if __name__ == '__main__':
 
     random.seed(args.seed)
     dataset = AudioDataset(
-        ds=ds_collections[args.dataset],
+        ds=ds_collections[args.dataset]
     )
     data_loader = torch.utils.data.DataLoader(
         dataset=dataset,
