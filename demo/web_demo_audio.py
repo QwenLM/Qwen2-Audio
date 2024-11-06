@@ -142,25 +142,37 @@ def predict_multiple(audio_paths, prompt):
     ).eval()
     model.generation_config.max_new_tokens = 1024 
     processor = AutoProcessor.from_pretrained(args.checkpoint_path, resume_download=True)
-    audio_librosa = []
+    audio_librosa ,responses = [], []
     for audio in audio_paths:
         try:
             audio_data, sr = librosa.load(audio, sr=processor.feature_extractor.sampling_rate)
             audio_librosa.append(audio_data)
+            inputs = processor(text=prompt, audios=[audio_data], return_tensors="pt", padding=True)
+            if not args.cpu_only:
+                inputs = {k: v.to("cuda") for k, v in inputs.items()}
+            torch.cuda.empty_cache()
+            with autocast():
+                generate_ids = model.generate(**inputs, max_length=128)
+                generate_ids = generate_ids[:, inputs.input_ids.size(1):]
+            response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+            responses.append((audio, response))
+            print(f"{response=}")
+            del inputs, generate_ids
+            torch.cuda.empty_cache()
         except Exception as e:
             print(f"Error loading audio {audio}: {e}")
             continue
 
-    inputs = processor(text=prompt, audios=audio_librosa, return_tensors="pt", padding=True)
-    if not args.cpu_only:
-        inputs = {k: v.to("cuda") for k, v in inputs.items()}
-    torch.cuda.empty_cache()
-    with autocast():
-        generate_ids = model.generate(**inputs, max_length=128)  
-        generate_ids = generate_ids[:, inputs.input_ids.size(1):]
+    return responses
+    # if not args.cpu_only:
+    #     inputs = {k: v.to("cuda") for k, v in inputs.items()}
+    # torch.cuda.empty_cache()
+    # with autocast():
+    #     generate_ids = model.generate(**inputs, max_length=128)  
+    #     generate_ids = generate_ids[:, inputs.input_ids.size(1):]
 
-    response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
-    print(f"{response=}")
+    # response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+    # print(f"{response=}")
     
 
 def main():
