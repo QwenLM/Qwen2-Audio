@@ -30,7 +30,7 @@ class AudioDataset(torch.utils.data.Dataset):
         self.audio_folder = audio_folder
     
     def __len__(self):
-        return len(self.datas)
+        return len(self.audio_files)
 
     def __getitem__(self, idx):
         audio_file = self.audio_files[idx]
