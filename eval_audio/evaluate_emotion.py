@@ -74,8 +74,29 @@ def collate_fn(inputs, processor):
     source = [item['source'] for item in inputs]
     gt = [item['gt'] for item in inputs]
     audio_path = [item['audio'] for item in inputs]
-    input_audios = [ffmpeg_read(read_audio(path), sampling_rate=processor.feature_extractor.sampling_rate) for path in audio_path]
-    inputs = processor(text=input_texts, audios=input_audios, sampling_rate=processor.feature_extractor.sampling_rate, return_tensors="pt", padding=True)
+
+    input_audios = []
+    for path in audio_path:
+        audio_data = read_audio(path)
+        try:
+            audio_tensor = ffmpeg_read(audio_data, sampling_rate=processor.feature_extractor.sampling_rate)
+            input_audios.append(audio_tensor)
+        except Exception as e:
+            print(f"Error reading audio from {path}: {e}")
+            input_audios.append(None)
+    
+    input_audios = [audio for audio in input_audios if audio is not None]
+    if not input_audios:
+        raise ValueError("No valid audio data found.")
+    
+    # Prepare model inputs
+    inputs = processor(
+        text=input_texts, 
+        audios=input_audios, 
+        sampling_rate=processor.feature_extractor.sampling_rate, 
+        return_tensors="pt", 
+        padding=True
+    )
     return inputs, audio_path, source, gt
 
 class InferenceSampler(torch.utils.data.sampler.Sampler):
