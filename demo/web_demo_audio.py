@@ -143,8 +143,10 @@ def predict_multiple(audio_paths, prompt):
     for audio in audio_paths:
         try:
             audio_data, sr = librosa.load(audio, sr=processor.feature_extractor.sampling_rate)
-            print(audio_data,sr)
-            # inputs = processor(text=prompt, audios=[audio_data], return_tensors="pt", padding=True)
+            text = processor.apply_chat_template(task_history, add_generation_prompt=True, tokenize=False)
+            print(audio_data,sr,text)
+            inputs = processor(text=text, audios=[audio_data], return_tensors="pt", padding=True)
+            print(inputs)
             # if not args.cpu_only:
             #     inputs = {k: v.to("cuda") for k, v in inputs.items()}
             # torch.cuda.empty_cache()
