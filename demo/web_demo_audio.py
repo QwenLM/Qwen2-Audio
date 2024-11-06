@@ -10,7 +10,6 @@ from torch.cuda.amp import autocast
 
 
 
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
 DEFAULT_CKPT_PATH = 'Qwen/Qwen2-Audio-7B-Instruct'
 
 csv_file_path = "qwen2_audio_mutox_inference.csv"
@@ -127,18 +126,18 @@ def predict(chatbot, task_history):
     return chatbot, task_history
 
 
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
 
 def predict_multiple(audio_paths, prompt):
     args = _get_args()
     device_map = "cpu" if args.cpu_only else "auto"
-
     model = Qwen2AudioForConditionalGeneration.from_pretrained(
         args.checkpoint_path,
         torch_dtype="auto",
         device_map=device_map,
         resume_download=True,
     ).eval()
-    model.generation_config.max_new_tokens = 1024  
+    model.generation_config.max_new_tokens = 512 
     processor = AutoProcessor.from_pretrained(args.checkpoint_path, resume_download=True)
     responses = [] 
     for audio in audio_paths:
@@ -149,19 +148,18 @@ def predict_multiple(audio_paths, prompt):
                 inputs = {k: v.to("cuda") for k, v in inputs.items()}
             torch.cuda.empty_cache()
             with autocast():
-                generate_ids = model.generate(**inputs, max_length=128)  
+                generate_ids = model.generate(**inputs, max_new_tokens=128) 
                 generate_ids = generate_ids[:, inputs.input_ids.size(1):]
             response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
             responses.append((audio, response))
             print(f"{response=}")
             del inputs, generate_ids
             torch.cuda.empty_cache()
-
         except Exception as e:
             print(f"Error processing audio {audio}: {e}")
             continue
 
-    return responses  
+    return responses 
 
 def main():
     # Example audio paths and question for prediction
