@@ -7,7 +7,7 @@ import time
 from functools import partial
 import torch
 import requests
-
+import csv
 from tqdm import tqdm
 from transformers import AutoProcessor, Qwen2AudioForConditionalGeneration
 from transformers.pipelines.audio_utils import ffmpeg_read
@@ -16,7 +16,7 @@ import os
 
 
 ds_collections = {
-    'meld': {'path': 'ser/meld_eval.jsonl'}
+    'meld': {'path': '/home/rsingh57/audio-test/mutox-dataset/non_toxic'}
 }
 
 
@@ -192,15 +192,22 @@ if __name__ == '__main__':
             score = accuracy_score(refs, hyps)
             print(f"{source} ACC_score:", score, len(hyps))
 
-    
-    os.environ["MASTER_ADDR"] = "localhost"
-    os.environ["MASTER_PORT"] = "12355"
-    os.environ["WORLD_SIZE"] = "1"
-    os.environ["RANK"] = "0"
-    
-    # Your remaining code
-    torch.distributed.init_process_group(
-        backend='nccl',
-        world_size=int(os.getenv('WORLD_SIZE')),
-        rank=int(os.getenv('RANK')),
-    )
+    torch.distributed.barrier()
+
+    if torch.distributed.get_rank() == 0:
+        print(f"Evaluating {args.dataset} ...")
+        results = []
+        for gt, response, source, audio_path in zip(gts, rets, sources, audio_paths):
+            results.append({
+                'gt': gt,
+                'response': response,
+                'source': source,
+                'audio_path': audio_path,
+            })
+
+        results_file = f'{args.dataset}_mutox_test.csv'
+        with open(results_file, mode='w', newline='') as file:
+            writer = csv.DictWriter(file, fieldnames=['gt', 'response', 'source', 'audio_path'])
+            writer.writeheader()
+            writer.writerows(results)
+        print(f"Results saved to {results_file}")
