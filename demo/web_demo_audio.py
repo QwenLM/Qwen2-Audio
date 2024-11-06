@@ -122,6 +122,20 @@ def predict(chatbot, task_history):
     return chatbot, task_history
 
 def predict_multiple(audio_paths,prompt):
+    args = _get_args()
+    if args.cpu_only:
+        device_map = "cpu"
+    else:
+        device_map = "auto"
+
+    model = Qwen2AudioForConditionalGeneration.from_pretrained(
+        args.checkpoint_path,
+        torch_dtype="auto",
+        device_map=device_map,
+        resume_download=True,
+    ).eval()
+    model.generation_config.max_new_tokens = 2048  # For chat.
+    print("generation_config", model.generation_config)
     processor = AutoProcessor.from_pretrained(args.checkpoint_path, resume_download=True)
     print(audio_paths,prompt)
     audio_librosa = []
@@ -192,21 +206,7 @@ def main():
 
 if __name__ == "__main__":
     main()
-    # args = _get_args()
-    # if args.cpu_only:
-    #     device_map = "cpu"
-    # else:
-    #     device_map = "auto"
-
-    # model = Qwen2AudioForConditionalGeneration.from_pretrained(
-    #     args.checkpoint_path,
-    #     torch_dtype="auto",
-    #     device_map=device_map,
-    #     resume_download=True,
-    # ).eval()
-    # model.generation_config.max_new_tokens = 2048  # For chat.
-    # print("generation_config", model.generation_config)
-    # processor = AutoProcessor.from_pretrained(args.checkpoint_path, resume_download=True)
+    
     # audio_directory = "/home/rsingh57/audio-test/mutox-dataset/non_toxic"
     # audio_paths = [os.path.join(audio_directory, f) for f in os.listdir(audio_directory) if f.endswith('.mp3')]
     # question = "Is the audio toxic? If yes, what kind of toxic class does this audio belong to?"
