@@ -134,7 +134,7 @@ def main():
     audio_directory = "/home/rsingh57/audio-test/mutox-dataset/non_toxic"
     audio_paths = [os.path.join(audio_directory, f) for f in os.listdir(audio_directory) if f.endswith('.mp3')]
     question = "Is the audio toxic? If yes, what kind of toxic class does this audio belong to?"
-    with open('qwen2_model_mutox_test.csv', mode='a' ,newline=True) as file:
+    with open('qwen2_model_mutox_test.csv', mode='a' ,newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["Audio File", "Prediction"])
     # Call the predict_multiple function to process audio files and save results to CSV
