@@ -8,7 +8,7 @@ from argparse import ArgumentParser
 
 DEFAULT_CKPT_PATH = 'Qwen/Qwen2-Audio-7B-Instruct'
 
-csv_file_path = "qwen2-audio-mutox-inference.csv"
+csv_file_path = "qwen2_audio_mutox_inference.csv"
 def _get_args():
     parser = ArgumentParser()
     parser.add_argument("-c", "--checkpoint-path", type=str, default=DEFAULT_CKPT_PATH,
@@ -96,14 +96,14 @@ def predict(chatbot, task_history):
 
     response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
     print(f"{response=}")
-    audio_urls = [
-    item['audio_url']
-    for message in task_history
-    if 'content' in message
-    for item in message['content']
-    if item['type'] == 'audio']
+    # audio_urls = [
+    # item['audio_url']
+    # for message in task_history
+    # if 'content' in message
+    # for item in message['content']
+    # if item['type'] == 'audio']
 
-    print(audio_urls, response)
+    # print(audio_urls, response)
     # if not os.path.exists('qwen2-audio-mutox-inference.csv'):
     #     with open('qwen2_audio_mutox_test.csv', mode='w', newline='') as file:
     #         writer = csv.writer(file)
@@ -121,73 +121,92 @@ def predict(chatbot, task_history):
     chatbot.append((None, response))  # Add the response to chatbot
     return chatbot, task_history
 
-def predict_multiple(audio_url,prompt):
-   
+def predict_multiple(audio_paths,prompt):
     print(audio_paths,question)
+    audio_librosa = []
+    for audio in audio_paths:
+        audio_librosa.append(librosa.load(ele['audio_url'], sr=processor.feature_extractor.sampling_rate)[0])
+    print(audio_librosa)
+    
 
-def _launch_demo(args):
-    with gr.Blocks() as demo:
-        gr.Markdown(
-            """<p align="center"><img src="https://qianwen-res.oss-cn-beijing.aliyuncs.com/assets/blog/qwenaudio/qwen2audio_logo.png" style="height: 80px"/><p>""")
-        gr.Markdown("""<center><font size=8>Qwen2-Audio-Instruct Bot</center>""")
-        gr.Markdown(
-            """\
-    <center><font size=3>This WebUI is based on Qwen2-Audio-Instruct, developed by Alibaba Cloud. \
-    (本WebUI基于Qwen2-Audio-Instruct打造，实现聊天机器人功能。)</center>""")
-        gr.Markdown("""\
-    <center><font size=4>Qwen2-Audio <a href="https://modelscope.cn/models/qwen/Qwen2-Audio-7B">🤖 </a> 
-    | <a href="https://huggingface.co/Qwen/Qwen2-Audio-7B">🤗</a>&nbsp ｜ 
-    Qwen2-Audio-Instruct <a href="https://modelscope.cn/models/qwen/Qwen2-Audio-7B-Instruct">🤖 </a> | 
-    <a href="https://huggingface.co/Qwen/Qwen2-Audio-7B-Instruct">🤗</a>&nbsp ｜ 
-    &nbsp<a href="https://github.com/QwenLM/Qwen2-Audio">Github</a></center>""")
-        chatbot = mgr.Chatbot(label='Qwen2-Audio-7B-Instruct', elem_classes="control-height", height=750)
-
-        user_input = mgr.MultimodalInput(
-            interactive=True,
-            sources=['microphone', 'upload'],
-            submit_button_props=dict(value="🚀 Submit (发送)"),
-            upload_button_props=dict(value="📁 Upload (上传文件)", show_progress=True),
-        )
-        task_history = gr.State([])
-
-        with gr.Row():
-            empty_bin = gr.Button("🧹 Clear History (清除历史)")
-            regen_btn = gr.Button("🤔️ Regenerate (重试)")
-
-        user_input.submit(fn=add_text,
-                          inputs=[chatbot, task_history, user_input],
-                          outputs=[chatbot, task_history, user_input]).then(
-            predict, [chatbot, task_history], [chatbot, task_history], show_progress=True
-        )
-        empty_bin.click(reset_state, outputs=[chatbot, task_history], show_progress=True)
-        regen_btn.click(regenerate, [chatbot, task_history], [chatbot, task_history], show_progress=True)
-
-    demo.queue().launch(
-        share=True,
-        inbrowser=args.inbrowser,
-        server_port=args.server_port,
-        server_name=args.server_name,
-    )
-
-
-if __name__ == "__main__":
-    args = _get_args()
-    if args.cpu_only:
-        device_map = "cpu"
-    else:
-        device_map = "auto"
-
-    model = Qwen2AudioForConditionalGeneration.from_pretrained(
-        args.checkpoint_path,
-        torch_dtype="auto",
-        device_map=device_map,
-        resume_download=True,
-    ).eval()
-    model.generation_config.max_new_tokens = 2048  # For chat.
-    print("generation_config", model.generation_config)
-    processor = AutoProcessor.from_pretrained(args.checkpoint_path, resume_download=True)
+def main():
+    # Example audio paths and question for prediction
     audio_directory = "/home/rsingh57/audio-test/mutox-dataset/non_toxic"
     audio_paths = [os.path.join(audio_directory, f) for f in os.listdir(audio_directory) if f.endswith('.mp3')]
     question = "Is the audio toxic? If yes, what kind of toxic class does this audio belong to?"
-    #predict_multiple(audio_paths,question)
-    _launch_demo(args)
+    with open('qwen2_model_mutox_test.csv', mode='a' ,newline=True) as file:
+        writer = csv.writer(file)
+        writer.writerow(["Audio File", "Prediction"])
+    # Call the predict_multiple function to process audio files and save results to CSV
+    predict_multiple(audio_paths, question)
+
+
+# def _launch_demo(args):
+#     with gr.Blocks() as demo:
+#         gr.Markdown(
+#             """<p align="center"><img src="https://qianwen-res.oss-cn-beijing.aliyuncs.com/assets/blog/qwenaudio/qwen2audio_logo.png" style="height: 80px"/><p>""")
+#         gr.Markdown("""<center><font size=8>Qwen2-Audio-Instruct Bot</center>""")
+#         gr.Markdown(
+#             """\
+#     <center><font size=3>This WebUI is based on Qwen2-Audio-Instruct, developed by Alibaba Cloud. \
+#     (本WebUI基于Qwen2-Audio-Instruct打造，实现聊天机器人功能。)</center>""")
+#         gr.Markdown("""\
+#     <center><font size=4>Qwen2-Audio <a href="https://modelscope.cn/models/qwen/Qwen2-Audio-7B">🤖 </a> 
+#     | <a href="https://huggingface.co/Qwen/Qwen2-Audio-7B">🤗</a>&nbsp ｜ 
+#     Qwen2-Audio-Instruct <a href="https://modelscope.cn/models/qwen/Qwen2-Audio-7B-Instruct">🤖 </a> | 
+#     <a href="https://huggingface.co/Qwen/Qwen2-Audio-7B-Instruct">🤗</a>&nbsp ｜ 
+#     &nbsp<a href="https://github.com/QwenLM/Qwen2-Audio">Github</a></center>""")
+#         chatbot = mgr.Chatbot(label='Qwen2-Audio-7B-Instruct', elem_classes="control-height", height=750)
+
+#         user_input = mgr.MultimodalInput(
+#             interactive=True,
+#             sources=['microphone', 'upload'],
+#             submit_button_props=dict(value="🚀 Submit (发送)"),
+#             upload_button_props=dict(value="📁 Upload (上传文件)", show_progress=True),
+#         )
+#         task_history = gr.State([])
+
+#         with gr.Row():
+#             empty_bin = gr.Button("🧹 Clear History (清除历史)")
+#             regen_btn = gr.Button("🤔️ Regenerate (重试)")
+
+#         user_input.submit(fn=add_text,
+#                           inputs=[chatbot, task_history, user_input],
+#                           outputs=[chatbot, task_history, user_input]).then(
+#             predict, [chatbot, task_history], [chatbot, task_history], show_progress=True
+#         )
+#         empty_bin.click(reset_state, outputs=[chatbot, task_history], show_progress=True)
+#         regen_btn.click(regenerate, [chatbot, task_history], [chatbot, task_history], show_progress=True)
+
+#     demo.queue().launch(
+#         share=True,
+#         inbrowser=args.inbrowser,
+#         server_port=args.server_port,
+#         server_name=args.server_name,
+#     )
+
+
+
+
+if __name__ == "__main__":
+    main()
+    # args = _get_args()
+    # if args.cpu_only:
+    #     device_map = "cpu"
+    # else:
+    #     device_map = "auto"
+
+    # model = Qwen2AudioForConditionalGeneration.from_pretrained(
+    #     args.checkpoint_path,
+    #     torch_dtype="auto",
+    #     device_map=device_map,
+    #     resume_download=True,
+    # ).eval()
+    # model.generation_config.max_new_tokens = 2048  # For chat.
+    # print("generation_config", model.generation_config)
+    # processor = AutoProcessor.from_pretrained(args.checkpoint_path, resume_download=True)
+    # audio_directory = "/home/rsingh57/audio-test/mutox-dataset/non_toxic"
+    # audio_paths = [os.path.join(audio_directory, f) for f in os.listdir(audio_directory) if f.endswith('.mp3')]
+    # question = "Is the audio toxic? If yes, what kind of toxic class does this audio belong to?"
+    # #predict_multiple(audio_paths,question)
+    # _launch_demo(args)
