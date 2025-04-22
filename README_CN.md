@@ -240,6 +240,14 @@ generated_ids = model.generate(**inputs, max_length=256)
 generated_ids = generated_ids[:, inputs.input_ids.size(1):]
 response = processor.batch_decode(generated_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
 ```
+
+#### Finetuning
+感谢 Hugging Face 开源社区的贡献，使我们能够轻松地使用 Accelerate 和 DeepSpeed 实现模型微调（finetuning）。脚本支持 LoRA（低秩适应）和全参数微调，相关代码来自[Xiaoming Liu](https://github.com/Lollipop)。
+
+```bash
+cd finetune && bash run.sh
+```
+
 #### 🤖 ModelScope
 我们强烈建议用户，特别是中国大陆地区的用户，使用 ModelScope。`snapshot_download` 可以帮助您解决下载检查点时遇到的问题。
 <br>
