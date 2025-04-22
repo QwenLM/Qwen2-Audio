@@ -1,0 +1,1 @@
+CUDA_VISIBLE_DEVICES=0 uvicorn audio_api:app --host=127.0.0.1 --port=8602 --reload
