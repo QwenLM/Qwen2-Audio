@@ -75,6 +75,12 @@ KeyError: 'qwen2-audio'
 ## Quickstart
 Below, we provide simple examples to show how to use Qwen2-Audio and Qwen2-Audio-Instruct with 🤗 Transformers.
 Before running the code, make sure you have setup the environment and installed the required packages. Make sure you meet the above requirements, and then install the dependent libraries.
+
+```
+uv init .
+uv add torch accelerate git+https://github.com/huggingface/transformers librosa
+```
+
 Now you can start with ModelScope or Transformers. Qwen2-Audio models currently perform best with audio clips under 30 seconds.
 #### 🤗 Transformers
 In the following, we demonstrate how to use `Qwen2-Audio-7B-Instruct` for the inference, supporting both voice chat and audio analysis modes. Note that we have used the ChatML format for dialog, in this demo we show how to leverage `apply_chat_template` for this purpose.
@@ -117,6 +123,7 @@ generate_ids = model.generate(**inputs, max_length=256)
 generate_ids = generate_ids[:, inputs.input_ids.size(1):]
 
 response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+print(response)
 ```
 
 ##### Audio Analysis Inference
@@ -159,12 +166,13 @@ for message in conversation:
                 )
 
 inputs = processor(text=text, audios=audios, return_tensors="pt", padding=True)
-inputs.input_ids = inputs.input_ids.to("cuda")
+inputs.input_ids = inputs.input_ids.to(model.device)
 
 generate_ids = model.generate(**inputs, max_length=256)
 generate_ids = generate_ids[:, inputs.input_ids.size(1):]
 
 response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+print(response)
 ```
 
 ##### Batch Inference
@@ -221,6 +229,7 @@ generate_ids = model.generate(**inputs, max_length=256)
 generate_ids = generate_ids[:, inputs.input_ids.size(1):]
 
 response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)
+print(response)
 ```
 Running Qwen2-Audio pretrained base model is also simple.
 ```python
@@ -240,6 +249,7 @@ inputs = processor(text=prompt, audios=audio, return_tensors="pt")
 generated_ids = model.generate(**inputs, max_length=256)
 generated_ids = generated_ids[:, inputs.input_ids.size(1):]
 response = processor.batch_decode(generated_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+print(response)
 ```
 #### 🤖 ModelScope
 We strongly advise users especially those in mainland China to use ModelScope. `snapshot_download` can help you solve issues concerning downloading checkpoints.
