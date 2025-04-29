@@ -96,19 +96,27 @@ conversation = [
     ]},
     {"role": "assistant", "content": "Yes, the speaker is female and in her twenties."},
     {"role": "user", "content": [
-        {"type": "audio", "audio_url": "https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen2-Audio/audio/translate_to_chinese.wav"},
+        {"type": "audio", "audio_file": "path/to/local/translate_to_chinese.wav"},
     ]},
 ]
+
 text = processor.apply_chat_template(conversation, add_generation_prompt=True, tokenize=False)
+
 audios = []
 for message in conversation:
     if isinstance(message["content"], list):
         for ele in message["content"]:
             if ele["type"] == "audio":
-                audios.append(librosa.load(
-                    BytesIO(urlopen(ele['audio_url']).read()), 
-                    sr=processor.feature_extractor.sampling_rate)[0]
-                )
+                if "audio_url" in ele:
+                    audios.append(librosa.load(
+                        BytesIO(urlopen(ele['audio_url']).read()), 
+                        sr=processor.feature_extractor.sampling_rate)[0]
+                    )
+                elif "audio_file" in ele:
+                    audios.append(librosa.load(
+                        ele['audio_file'], 
+                        sr=processor.feature_extractor.sampling_rate)[0]
+                    )
 
 inputs = processor(text=text, audios=audios, return_tensors="pt", padding=True)
 inputs.input_ids = inputs.input_ids.to("cuda")
@@ -117,6 +125,8 @@ generate_ids = model.generate(**inputs, max_length=256)
 generate_ids = generate_ids[:, inputs.input_ids.size(1):]
 
 response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+
+print(response)
 ```
 
 ##### Audio Analysis Inference
@@ -142,21 +152,30 @@ conversation = [
     ]},
     {"role": "assistant", "content": "Stay alert and cautious, and check if anyone is hurt or if there is any damage to property."},
     {"role": "user", "content": [
-        {"type": "audio", "audio_url": "https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen2-Audio/audio/1272-128104-0000.flac"},
+        {"type": "audio", "audio_file": "path/to/local/1272-128104-0000.flac"},
         {"type": "text", "text": "What does the person say?"},
     ]},
 ]
+
 text = processor.apply_chat_template(conversation, add_generation_prompt=True, tokenize=False)
+
 audios = []
 for message in conversation:
     if isinstance(message["content"], list):
         for ele in message["content"]:
             if ele["type"] == "audio":
-                audios.append(
-                    librosa.load(
-                        BytesIO(urlopen(ele['audio_url']).read()), 
-                        sr=processor.feature_extractor.sampling_rate)[0]
-                )
+                if "audio_url" in ele:
+                    audios.append(
+                        librosa.load(
+                            BytesIO(urlopen(ele['audio_url']).read()), 
+                            sr=processor.feature_extractor.sampling_rate)[0]
+                    )
+                elif "audio_file" in ele:
+                    audios.append(
+                        librosa.load(
+                            ele['audio_file'], 
+                            sr=processor.feature_extractor.sampling_rate)[0]
+                    )
 
 inputs = processor(text=text, audios=audios, return_tensors="pt", padding=True)
 inputs.input_ids = inputs.input_ids.to("cuda")
@@ -165,6 +184,8 @@ generate_ids = model.generate(**inputs, max_length=256)
 generate_ids = generate_ids[:, inputs.input_ids.size(1):]
 
 response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+
+print(response)
 ```
 
 ##### Batch Inference
@@ -192,7 +213,7 @@ conversation1 = [
 
 conversation2 = [
     {"role": "user", "content": [
-        {"type": "audio", "audio_url": "https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen2-Audio/audio/1272-128104-0000.flac"},
+        {"type": "audio", "audio_file": "path/to/local/1272-128104-0000.flac"},
         {"type": "text", "text": "What does the person say?"},
     ]},
 ]
@@ -207,11 +228,19 @@ for conversation in conversations:
         if isinstance(message["content"], list):
             for ele in message["content"]:
                 if ele["type"] == "audio":
-                    audios.append(
-                        librosa.load(
-                            BytesIO(urlopen(ele['audio_url']).read()), 
-                            sr=processor.feature_extractor.sampling_rate)[0]
-                    )
+                    if "audio_url" in ele:
+                        audios.append(
+                            librosa.load(
+                                BytesIO(urlopen(ele['audio_url']).read()), 
+                                sr=processor.feature_extractor.sampling_rate)[0]
+                        )
+                    elif "audio_file" in ele:
+                        audios.append(
+                            librosa.load(
+                                ele['audio_file'], 
+                                sr=processor.feature_extractor.sampling_rate)[0]
+                        )
+
 
 inputs = processor(text=text, audios=audios, return_tensors="pt", padding=True)
 inputs['input_ids'] = inputs['input_ids'].to("cuda")
@@ -233,8 +262,13 @@ model = Qwen2AudioForConditionalGeneration.from_pretrained("Qwen/Qwen2-Audio-7B"
 processor = AutoProcessor.from_pretrained("Qwen/Qwen2-Audio-7B" ,trust_remote_code=True)
 
 prompt = "<|audio_bos|><|AUDIO|><|audio_eos|>Generate the caption in English:"
-url = "https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-Audio/glass-breaking-151256.mp3"
-audio, sr = librosa.load(BytesIO(urlopen(url).read()), sr=processor.feature_extractor.sampling_rate)
+audio_source = {"audio_url": "https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-Audio/glass-breaking-151256.mp3"}  # you can replace with local file path, eg: {"audio_file": "path/to/local/file.wav"}
+
+if "audio_url" in audio_source:
+    audio, sr = librosa.load(BytesIO(urlopen(audio_source["audio_url"]).read()), sr=processor.feature_extractor.sampling_rate)
+elif "audio_file" in audio_source:
+    audio, sr = librosa.load(audio_source["audio_file"], sr=processor.feature_extractor.sampling_rate)
+
 inputs = processor(text=prompt, audios=audio, return_tensors="pt")
 
 generated_ids = model.generate(**inputs, max_length=256)
